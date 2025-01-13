@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Semester Notes</title>
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(120deg, #f7f7f7, #e9ecef);
+      color: #333;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin: 20px 0;
+      color: #3c3c3c;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      color: #555;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px 30px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      margin-top: 40px;
+    }
+
+    .semesters {
+      margin: 20px 0;
+    }
+
+    .sem-link {
+      display: inline-block;
+      margin: 10px;
+      padding: 10px 20px;
+      background: #007bff;
+      color: white;
+      font-weight: bold;
+      text-decoration: none;
+      border-radius: 8px;
+      transition: background-color 0.3s ease;
+    }
+
+    .sem-link:hover {
+      background: #0056b3;
+    }
+
+    #pdf-list {
+      margin-top: 20px;
+      text-align: left;
+    }
+
+    .note-item {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .note-item p {
+      margin: 0;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .note-link {
+      color: #007bff;
+      font-weight: bold;
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+
+    .note-link:hover {
+      color: #0056b3;
+    }
+
+    footer {
+      margin-top: 30px;
+      padding: 10px 0;
+      background: #f1f1f1;
+      color: #777;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Semester Notes</h1>
+  <div class="container">
+    <div id="pdf-list">
+      <p>Select a semester to view the notes:</p>
+      <div class="semesters">
+        <!-- Semester links will be dynamically generated here -->
+      </div>
+    </div>
+  </div>
+  <footer>&copy; 2024 Material Guru. All rights reserved.</footer>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const regulation = urlParams.get('regulation');
+    const branch = urlParams.get('branch');
+  
+    // Add dynamic headers
+    const container = document.querySelector('.container');
+    container.insertAdjacentHTML('afterbegin', `
+      <h2>Regulation: ${regulation}</h2>
+      <h2>Branch: ${branch}</h2>
+    `);
+  
+    // Determine the number of semesters based on the branch
+    const branchesWith4Sems = ['MBA', 'MCA', 'MTech']; // Branches that have only 4 semesters
+    const semesters = branchesWith4Sems.includes(branch)
+      ? ['SEM1', 'SEM2', 'SEM3', 'SEM4']
+      : ['SEM1', 'SEM2', 'SEM3', 'SEM4', 'SEM5', 'SEM6', 'SEM7', 'SEM8'];
+  
+    const semestersDiv = document.querySelector('.semesters');
+  
+    semesters.forEach((sem) => {
+      const link = document.createElement('a');
+      link.className = 'sem-link';
+      link.textContent = sem;
+      link.href = "#";
+  
+      link.addEventListener('click', (event) => {
+        event.preventDefault();
+        const pdfList = document.getElementById('pdf-list');
+        pdfList.innerHTML = "<p>Loading...</p>";
+  
+        // Fetch semester notes
+        fetch(`/get_semester_notes/?regulation=${regulation}&branch=${branch}&semester=${sem}`)
+          .then((response) => response.json())
+          .then((data) => {
+            pdfList.innerHTML = ""; 
+  
+            if (data.notes.length === 0) {
+              pdfList.innerHTML = "<p>No notes found for this semester.</p>";
+            } else {
+              data.notes.forEach((note) => {
+                const noteDiv = document.createElement('div');
+                noteDiv.className = 'note-item';
+  
+                const noteTitle = document.createElement('p');
+                noteTitle.textContent = note.title;
+  
+                const noteLink = document.createElement('a');
+                noteLink.href = note.pdf_url;
+                noteLink.textContent = "Download";
+                noteLink.target = "_blank";
+                noteLink.className = 'note-link';
+  
+                noteDiv.appendChild(noteTitle);
+                noteDiv.appendChild(noteLink);
+                pdfList.appendChild(noteDiv);
+              });
+            }
+          })
+          .catch((error) => {
+            console.error('Error fetching notes:', error);
+            pdfList.innerHTML = "<p>Error fetching notes. Please try again later.</p>";
+          });
+      });
+  
+      semestersDiv.appendChild(link);
+    });
+  </script>
+  
+</body>
+</html>
